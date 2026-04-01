@@ -28,13 +28,32 @@ export async function proxy(request: NextRequest) {
   if (detectedIp) {
     requestHeaders.set("x-detected-ip", detectedIp);
   }
-  const locationSegments = [
-    request.headers.get("x-vercel-ip-country-region"),
-    request.headers.get("x-vercel-ip-city"),
-    countryCode ?? request.headers.get("x-vercel-ip-country"),
-  ]
-    .map((value) => value?.trim())
-    .filter((value): value is string => Boolean(value));
+  let locationSegments: string[] = [];
+  const netlifyGeo = request.headers.get("x-nf-geo");
+  if (netlifyGeo) {
+    try {
+      const parsed = JSON.parse(netlifyGeo) as {
+        city?: string;
+        region?: string;
+        country?: string;
+      };
+      locationSegments = [parsed.region, parsed.city, parsed.country]
+        .map((value) => value?.trim())
+        .filter((value): value is string => Boolean(value));
+    } catch {
+      locationSegments = [];
+    }
+  }
+
+  if (locationSegments.length === 0) {
+    locationSegments = [
+      request.headers.get("x-vercel-ip-country-region"),
+      request.headers.get("x-vercel-ip-city"),
+      countryCode ?? request.headers.get("x-vercel-ip-country"),
+    ]
+      .map((value) => value?.trim())
+      .filter((value): value is string => Boolean(value));
+  }
   if (locationSegments.length > 0) {
     requestHeaders.set("x-detected-location", locationSegments.join(" / "));
   }

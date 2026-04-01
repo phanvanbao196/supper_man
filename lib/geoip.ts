@@ -44,9 +44,11 @@ function isPrivateIp(ip: string): boolean {
 
 export function extractClientIp(headerStore: Headers): string | null {
   const candidates = [
+    headerStore.get("x-nf-client-connection-ip"),
     headerStore.get("x-forwarded-for"),
     headerStore.get("x-real-ip"),
     headerStore.get("cf-connecting-ip"),
+    headerStore.get("x-client-ip"),
   ];
 
   for (const candidate of candidates) {
