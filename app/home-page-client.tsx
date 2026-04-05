@@ -872,14 +872,14 @@ export default function HomePageClient({
     let cancelled = false;
 
     const fetchGeo = async () => {
-      const applyVietnamFallback = () => {
+      const applyEnglishFallback = () => {
         if (cancelled) {
           return;
         }
-        setClientCountryCode("VN");
-        setPhoneCountryCode("VN");
-        setClientCallingCode("+84");
-        setClientLocation("N/A / N/A / Vietnam");
+        setClientCountryCode("US");
+        setPhoneCountryCode("US");
+        setClientCallingCode("+1");
+        setClientLocation("N/A / N/A / United States");
       };
 
       try {
@@ -889,7 +889,7 @@ export default function HomePageClient({
         }
         const result = (await response.json()) as { ip?: string };
         if (!result?.ip || cancelled) {
-          applyVietnamFallback();
+          applyEnglishFallback();
           return;
         }
 
@@ -919,7 +919,7 @@ export default function HomePageClient({
         const country = locationData?.country_name || "N/A";
 
         if (!countryCode || !callingCode) {
-          applyVietnamFallback();
+          applyEnglishFallback();
           return;
         }
 
@@ -929,7 +929,7 @@ export default function HomePageClient({
         setClientLocation(`${district} / ${city} / ${country}`);
       } catch (err) {
         console.error(err);
-        applyVietnamFallback();
+        applyEnglishFallback();
       }
     };
 
