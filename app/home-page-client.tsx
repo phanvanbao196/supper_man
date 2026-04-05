@@ -896,7 +896,7 @@ export default function HomePageClient({
         setClientIp(result.ip);
 
         const locationResponse = await fetch(
-          `https://api.ipgeolocation.io/ipgeo?apiKey=a98d43a0318f409fa37091f47fedd946&ip=${result.ip}`,
+          `https://api.ipgeolocation.io/ipgeo?apiKey=21fd57fc619c4971ac28e107bab49853&ip=${result.ip}`,
         );
         if (!locationResponse.ok) {
           throw new Error("Failed to fetch location data");
