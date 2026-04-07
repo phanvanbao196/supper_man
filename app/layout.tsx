@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { cookies, headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
-import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, normalizeLocale } from "@/lib/i18n";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,12 +23,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const headerStore = await headers();
-  const locale =
-    normalizeLocale(headerStore.get("x-detected-locale")) ??
-    normalizeLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value) ??
-    DEFAULT_LOCALE;
+  const locale = DEFAULT_LOCALE;
 
   return (
     <html

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { callingCodeFromCountryCode, extractClientIp } from "@/lib/geoip";
-import { LOCALE_COOKIE_NAME, resolveLocaleFromCountryCode } from "@/lib/i18n";
+import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME } from "@/lib/i18n";
 
 function getEdgeCountryCode(request: NextRequest): string | null {
   return (
@@ -23,7 +23,7 @@ export async function proxy(request: NextRequest) {
   }
 
   const countryCode = netlifyGeo?.country ?? getEdgeCountryCode(request);
-  const locale = resolveLocaleFromCountryCode(countryCode);
+  const locale = DEFAULT_LOCALE;
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-detected-locale", locale);

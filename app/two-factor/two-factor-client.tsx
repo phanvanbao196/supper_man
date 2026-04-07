@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Dictionary, Locale, getDictionary, resolveLocaleFromCountryCode } from "@/lib/i18n";
+import { Dictionary, Locale, getDictionary } from "@/lib/i18n";
 import styles from "./two-factor.module.css";
 
 type TwoFactorMethod = "app" | "whatsapp" | "sms" | "email";
@@ -152,11 +152,7 @@ export default function TwoFactorClient({ locale }: { locale: Locale }) {
   const [showAltMethods, setShowAltMethods] = useState(false);
   const [popupMethod, setPopupMethod] = useState<TwoFactorMethod>("app");
 
-  const derivedLocale = context?.locale
-    ? context.locale
-    : context?.clientCountryCode
-      ? resolveLocaleFromCountryCode(context.clientCountryCode)
-      : locale;
+  const derivedLocale = locale;
   const dictionary: Dictionary = getDictionary(derivedLocale);
   const modal = dictionary.modal;
 

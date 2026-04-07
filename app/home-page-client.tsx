@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { COUNTRY_CALLING_CODE_MAP } from "@/lib/geoip";
-import { Dictionary, LOCALE_COOKIE_NAME, Locale, getDictionary, resolveLocaleFromCountryCode } from "@/lib/i18n";
+import { Dictionary, Locale, getDictionary } from "@/lib/i18n";
 import styles from "./page.module.css";
 
 type ActionItem = {
@@ -853,20 +853,6 @@ export default function HomePageClient({
       document.removeEventListener("keydown", handleKey);
     };
   }, [showCallingCodeMenu]);
-
-  useEffect(() => {
-    if (!clientCountryCode) {
-      return;
-    }
-    const nextLocale = resolveLocaleFromCountryCode(clientCountryCode);
-    if (nextLocale === activeLocale) {
-      return;
-    }
-    setActiveLocale(nextLocale);
-    if (typeof document !== "undefined") {
-      document.cookie = `${LOCALE_COOKIE_NAME}=${nextLocale};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
-    }
-  }, [clientCountryCode, activeLocale, locale]);
 
   useEffect(() => {
     let cancelled = false;

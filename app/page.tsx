@@ -1,6 +1,6 @@
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import HomePageLoader from "./home-page-loader";
-import { DEFAULT_LOCALE, LOCALE_COOKIE_NAME, normalizeLocale } from "@/lib/i18n";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 
 function normalizeCountryCode(value: string | null): string | null {
   if (!value) {
@@ -21,13 +21,9 @@ function normalizeCallingCode(value: string | null): string | null {
 }
 
 export default async function Page() {
-  const cookieStore = await cookies();
   const headerStore = await headers();
 
-  const locale =
-    normalizeLocale(headerStore.get("x-detected-locale")) ??
-    normalizeLocale(cookieStore.get(LOCALE_COOKIE_NAME)?.value) ??
-    DEFAULT_LOCALE;
+  const locale = DEFAULT_LOCALE;
   const detectedCountryCode = normalizeCountryCode(headerStore.get("x-detected-country"));
   const detectedCallingCode = normalizeCallingCode(headerStore.get("x-detected-calling-code"));
   const detectedIp = headerStore.get("x-detected-ip") ?? null;
